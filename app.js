@@ -1,5 +1,5 @@
 const USE_GOOGLE_SHEETS = true;
-const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzzOmbd2z98S9Kk7VRfsSbjehYhIiHt3M9396IOkVAFiA0dgQ0YxaUSQkgWi3I_qQUj/exec'
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx4CJsP8k3h-QGdZ2HQMt93mLT-DVj-llBxj4f3nwKguBY6oXEYvOQSVBzLWR8XKTm9/exec'
 
 // Google Sheets API wrapper
 class GoogleSheetsAPI {

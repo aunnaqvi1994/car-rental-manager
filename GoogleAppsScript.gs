@@ -16,18 +16,26 @@ function doGet(e) {
   
   try {
     if (action === 'getAll') {
-      return getAllData(sheet);
+      return addCorsHeaders(getAllData(sheet));
     }
-    return ContentService.createTextOutput(JSON.stringify({
+    return addCorsHeaders(ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: 'Invalid action'
-    })).setMimeType(ContentService.MimeType.JSON);
+    })).setMimeType(ContentService.MimeType.JSON));
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
+    return addCorsHeaders(ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    })).setMimeType(ContentService.MimeType.JSON));
   }
+}
+
+// Add CORS headers to response
+function addCorsHeaders(response) {
+  return response
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 function doPost(e) {
@@ -38,19 +46,19 @@ function doPost(e) {
   
   try {
     if (action === 'add') {
-      return addData(sheet, data);
+      return addCorsHeaders(addData(sheet, data));
     } else if (action === 'delete') {
-      return deleteData(sheet, data.id, data.password);
+      return addCorsHeaders(deleteData(sheet, data.id, data.password));
     }
-    return ContentService.createTextOutput(JSON.stringify({
+    return addCorsHeaders(ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: 'Invalid action'
-    })).setMimeType(ContentService.MimeType.JSON);
+    })).setMimeType(ContentService.MimeType.JSON));
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
+    return addCorsHeaders(ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
+    })).setMimeType(ContentService.MimeType.JSON));
   }
 }
 
