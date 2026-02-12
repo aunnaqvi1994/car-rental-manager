@@ -1,19 +1,121 @@
 // ====================================================
-// FIREBASE CONFIGURATION  
+// FIREBASE CONFIGURATION
 // ====================================================
-const firebaseConfig = {
-    databaseURL: "https://car-rental-manager-8e3e9-default-rtdb.asia-southeast1.firebasedatabase.app/"
-};
+let useFirebase = true;
+let db = null;
+
+if (typeof firebase !== 'undefined') {
+    try {
+        firebase.initializeApp({
+            databaseURL: "https://car-rental-manager-8e3e9-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        });
+        db = firebase.database();
+        console.log('🔥 Firebase ready!');
+    } catch (e) {
+        console.warn('Firebase unavailable, using localStorage');
+        useFirebase = false;
+    }
+} else {
+    useFirebase = false;
+}
+
+// Helper to save to Firebase
+async function saveToFirebase(path, dataArray) {
+    if (!db) return;
+    const obj = {};
+    dataArray.forEach(item => { obj[item.id] = item; });
+    await db.ref(`/${path}`).set(obj);
+}
+
+// Helper to load from Firebase  
+async function loadFromFirebase(path) {
+    if (!db) return [];
+    const snapshot = await db.ref(`/${path}`).once('value');
+    const data = snapshot.val();
+    return data ? Object.values(data) : [];
+}
+
+
+// Firebase Integration
+const USE_FIREBASE = true;
+const FIREBASE_URL = "https://car-rental-manager-8e3e9-default-rtdb.asia-southeast1.firebasedatabase.app/";
+let firebaseDB = null;
 
 // Initialize Firebase
-let database;
-try {
-    firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-    console.log('🔥 Firebase initialized successfully!');
-} catch(e) {
-    console.error('Firebase initialization failed:', e);
+if (USE_FIREBASE && typeof firebase !== 'undefined') {
+    try {
+        firebase.initializeApp({ databaseURL: FIREBASE_URL });
+        firebaseDB = firebase.database();
+        console.log('🔥 Firebase initialized');
+    } catch(e) {
+        console.warn('Firebase init failed:', e);
+    }
 }
+
+const USE_GOOGLE_SHEETS = false; // Set to true to use Google Sheets, false for localStorage
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx4CJsP8k3h-QGdZ2HQMt93mLT-DVj-llBxj4f3nwKguBY6oXEYvOQSVBzLWR8XKTm9/exec'
+
+// Google Sheets API wrapper
+class GoogleSheetsAPI {
+    constructor(webAppUrl) {
+        this.url = webAppUrl;
+    }
+
+    async getAllData(sheetName) {
+        try {
+            const response = await fetch(`${this.url}?action=getAll&sheet=${sheetName}`);
+            const result = await response.json();
+            if (result.success) {
+                return result.data;
+            } else {
+                console.error('Error fetching data:', result.error);
+                return [];
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            return [];
+        }
+    }
+
+    async addData(sheetName, data) {
+        try {
+            const response = await fetch(this.url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'add',
+                    sheet: sheetName,
+                    data: data
+                })
+            });
+            const result = await response.json();
+            return result.success;
+        } catch (error) {
+            console.error('Error adding data:', error);
+            return false;
+        }
+    }
+
+    async deleteData(sheetName, id, password) {
+        try {
+            const response = await fetch(this.url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'delete',
+                    sheet: sheetName,
+                    data: { id, password }
+                })
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error deleting data:', error);
+            return { success: false, error: error.toString() };
+        }
+    }
+}
+
+// Initialize the API
+const sheetsAPI = USE_GOOGLE_SHEETS ? new GoogleSheetsAPI(GOOGLE_SHEETS_URL) : null;
 
 // ===================================
 // DATA MANAGEMENT
@@ -28,38 +130,72 @@ class RentalManager {
 
     // Initialize data - load from Google Sheets or localStorage
     async init() {
-        if (!database) {
-            console.warn("Firebase not available");
-            this.isInitialized = true;
-            return;
-        }
-        try {
-            const snapshot = await database.ref("/").once("value");
-            const data = snapshot.val() || {};
-            this.dailyEntries = data.dailyEntries ? Object.values(data.dailyEntries) : [];
-            this.monthlyExpenses = data.monthlyExpenses ? Object.values(data.monthlyExpenses) : [];
-            this.maintenanceRecords = data.maintenanceRecords ? Object.values(data.maintenanceRecords) : [];
-            this.isInitialized = true;
-            console.log("✅ Data loaded from Firebase");
-        } catch (error) {
-            console.error("Error loading from Firebase:", error);
-            this.isInitialized = true;
-        }
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            // Load from Google Sheets
+            const [dailyData, monthlyData, maintenanceData] = await Promise.all([
+                sheetsAPI.getAllData('DailyEntries'),
+                sheetsAPI.getAllData('MonthlyExpenses'),
+                sheetsAPI.getAllData('Maintenance')
+            ]);
+
+            this.dailyEntries = dailyData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                earnings: parseFloat(row.Earnings) || 0,
+                expenses: parseFloat(row.Expenses) || 0,
+                profit: parseFloat(row.Profit) || 0,
+                ownerShare: parseFloat(row.OwnerShare) || 0,
+                driverShare: parseFloat(row.DriverShare) || 0
+            }));
+
+            this.monthlyExpenses = monthlyData.map(row => ({
+                id: parseInt(row.ID),
+                month: row.Month,
+                name: row.Name,
+                amount: parseFloat(row.Amount) || 0
+            }));
+
+            this.maintenanceRecords = maintenanceData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                description: row.Description,
+                cost: parseFloat(row.Cost) || 0
+            }));
+        } else {
+            // Load from localStorage
+            this.dailyEntries = [];
+        this.monthlyExpenses = [];
+        this.maintenanceRecords = [];
+        this.init();
     }
-
-
-    // Save data to Firebase
-    async saveToFirebase(collection, data) {
-        if (!database) return;
-        try {
-            const dataObj = {};
-            data.forEach(item => {
-                dataObj[item.id] = item;
-            });
-            await database.ref(`/${collection}`).set(dataObj);
-        } catch (error) {
-            console.error(`Error saving to Firebase:`, error);
+    
+    async init() {
+        if (useFirebase) {
+            try {
+                const [daily, monthly, maint] = await Promise.all([
+                    loadFromFirebase('dailyEntries'),
+                    loadFromFirebase('monthlyExpenses'),
+                    loadFromFirebase('maintenanceRecords')
+                ]);
+                this.dailyEntries = daily;
+                this.monthlyExpenses = monthly;
+                this.maintenanceRecords = maint;
+                console.log('✅ Loaded from Firebase');
+            } catch(e) {
+                console.error('Firebase load failed:', e);
+                this.dailyEntries = this.loadData('dailyEntries') || [];
+                this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
+                this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
+            }
+        } else {
+            this.dailyEntries = this.loadData('dailyEntries') || [];
+            this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
+            this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
         }
+            this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
+            this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
+        }
+        this.isInitialized = true;
     }
 
     // Load data from localStorage
@@ -127,7 +263,7 @@ class RentalManager {
             };
             await sheetsAPI.addData('DailyEntries', sheetData);
         } else {
-        await this.saveToFirebase("dailyEntries", this.dailyEntries);
+            this.saveData('dailyEntries', this.dailyEntries);
         }
         return { success: true, entry };
     }
@@ -145,7 +281,7 @@ class RentalManager {
             return result;
         } else {
             this.dailyEntries = this.dailyEntries.filter(entry => entry.id !== id);
-        await this.saveToFirebase("dailyEntries", this.dailyEntries);
+            this.saveData('dailyEntries', this.dailyEntries);
             return { success: true };
         }
     }
@@ -167,7 +303,7 @@ class RentalManager {
     // MONTHLY EXPENSES
     // ===================================
 
-    async addMonthlyExpense(name, amount, month) {
+    addMonthlyExpense(name, amount, month) {
         const expense = {
             id: Date.now(),
             name,
@@ -176,13 +312,13 @@ class RentalManager {
         };
 
         this.monthlyExpenses.push(expense);
-        await this.saveToFirebase("monthlyExpenses", this.monthlyExpenses);
+        this.saveData('monthlyExpenses', this.monthlyExpenses);
         return { success: true, expense };
     }
 
-    async deleteMonthlyExpense(id) {
+    deleteMonthlyExpense(id) {
         this.monthlyExpenses = this.monthlyExpenses.filter(exp => exp.id !== id);
-        await this.saveToFirebase("monthlyExpenses", this.monthlyExpenses);
+        this.saveData('monthlyExpenses', this.monthlyExpenses);
     }
 
     getAllMonthlyExpenses(sortDescending = true) {
@@ -198,7 +334,7 @@ class RentalManager {
     // MAINTENANCE
     // ===================================
 
-    async addMaintenanceRecord(date, description, cost) {
+    addMaintenanceRecord(date, description, cost) {
         const record = {
             id: Date.now(),
             date,
@@ -207,13 +343,13 @@ class RentalManager {
         };
 
         this.maintenanceRecords.push(record);
-        await this.saveToFirebase("maintenanceRecords", this.maintenanceRecords);
+        this.saveData('maintenanceRecords', this.maintenanceRecords);
         return { success: true, record };
     }
 
-    async deleteMaintenanceRecord(id) {
+    deleteMaintenanceRecord(id) {
         this.maintenanceRecords = this.maintenanceRecords.filter(rec => rec.id !== id);
-        await this.saveToFirebase("maintenanceRecords", this.maintenanceRecords);
+        this.saveData('maintenanceRecords', this.maintenanceRecords);
     }
 
     getAllMaintenanceRecords(sortDescending = true) {
@@ -360,7 +496,7 @@ class UIController {
         // Daily Entry Form
         document.getElementById('dailyEntryForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.async handleDailyEntrySubmit();
+            this.handleDailyEntrySubmit();
         });
 
         // Real-time calculation preview
@@ -373,13 +509,13 @@ class UIController {
         // Monthly Expense Form
         document.getElementById('monthlyExpenseForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.async handleMonthlyExpenseSubmit();
+            this.handleMonthlyExpenseSubmit();
         });
 
         // Maintenance Form
         document.getElementById('maintenanceForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.async handleMaintenanceSubmit();
+            this.handleMaintenanceSubmit();
         });
 
         // Filter controls
@@ -468,7 +604,7 @@ class UIController {
         document.getElementById('previewDriverShare').textContent = this.manager.formatCurrency(share);
     }
 
-    async handleDailyEntrySubmit() {
+    handleDailyEntrySubmit() {
         const date = document.getElementById('entryDate').value;
         const earnings = document.getElementById('earnings').value;
         const expenses = document.getElementById('expenses').value;
@@ -553,12 +689,12 @@ class UIController {
     // MONTHLY EXPENSES
     // ===================================
 
-    async handleMonthlyExpenseSubmit() {
+    handleMonthlyExpenseSubmit() {
         const name = document.getElementById('expenseName').value;
         const amount = document.getElementById('expenseAmount').value;
         const month = document.getElementById('expenseMonth').value;
 
-        const result = await this.manager.addMonthlyExpense(name, amount, month);
+        const result = this.manager.addMonthlyExpense(name, amount, month);
 
         if (result.success) {
             alert('✅ Monthly expense added successfully!');
@@ -585,13 +721,13 @@ class UIController {
         <td>${expense.name}</td>
         <td class="amount currency">${this.manager.formatCurrency(expense.amount)}</td>
         <td class="actions">
-          <button class="btn btn-danger btn-sm" onclick="ui.async deleteMonthlyExpense(${expense.id})">🗑️ Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="ui.deleteMonthlyExpense(${expense.id})">🗑️ Delete</button>
         </td>
       </tr>
     `).join('');
     }
 
-    async deleteMonthlyExpense(id) {
+    deleteMonthlyExpense(id) {
         const password = prompt('🔒 Owner Password Required\n\nEnter password to delete this expense:');
 
         if (password !== '1234') {
@@ -600,7 +736,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this expense?')) {
-            await this.manager.deleteMonthlyExpense(id);
+            this.manager.deleteMonthlyExpense(id);
             this.renderMonthlyExpenses();
             alert('✅ Expense deleted successfully!');
         }
@@ -610,12 +746,12 @@ class UIController {
     // MAINTENANCE
     // ===================================
 
-    async handleMaintenanceSubmit() {
+    handleMaintenanceSubmit() {
         const date = document.getElementById('maintenanceDate').value;
         const description = document.getElementById('maintenanceDescription').value;
         const cost = document.getElementById('maintenanceCost').value;
 
-        const result = await this.manager.addMaintenanceRecord(date, description, cost);
+        const result = this.manager.addMaintenanceRecord(date, description, cost);
 
         if (result.success) {
             alert('✅ Maintenance record added successfully!');
@@ -644,13 +780,13 @@ class UIController {
         <td>${record.description}</td>
         <td class="amount currency">${this.manager.formatCurrency(record.cost)}</td>
         <td class="actions">
-          <button class="btn btn-danger btn-sm" onclick="ui.async deleteMaintenanceRecord(${record.id})">🗑️ Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="ui.deleteMaintenanceRecord(${record.id})">🗑️ Delete</button>
         </td>
       </tr>
     `).join('');
     }
 
-    async deleteMaintenanceRecord(id) {
+    deleteMaintenanceRecord(id) {
         const password = prompt('🔒 Owner Password Required\n\nEnter password to delete this record:');
 
         if (password !== '1234') {
@@ -659,7 +795,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this maintenance record?')) {
-            await this.manager.deleteMaintenanceRecord(id);
+            this.manager.deleteMaintenanceRecord(id);
             this.renderMaintenanceRecords();
             alert('✅ Maintenance record deleted successfully!');
         }
