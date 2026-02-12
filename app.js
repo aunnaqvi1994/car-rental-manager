@@ -1,12 +1,119 @@
+const USE_GOOGLE_SHEETS = true;
 const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzzOmbd2z98S9Kk7VRfsSbjehYhIiHt3M9396IOkVAFiA0dgQ0YxaUSQkgWi3I_qQUj/exec'
+
+// Google Sheets API wrapper
+class GoogleSheetsAPI {
+    constructor(webAppUrl) {
+        this.url = webAppUrl;
+    }
+
+    async getAllData(sheetName) {
+        try {
+            const response = await fetch(`${this.url}?action=getAll&sheet=${sheetName}`);
+            const result = await response.json();
+            if (result.success) {
+                return result.data;
+            } else {
+                console.error('Error fetching data:', result.error);
+                return [];
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            return [];
+        }
+    }
+
+    async addData(sheetName, data) {
+        try {
+            const response = await fetch(this.url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'add',
+                    sheet: sheetName,
+                    data: data
+                })
+            });
+            const result = await response.json();
+            return result.success;
+        } catch (error) {
+            console.error('Error adding data:', error);
+            return false;
+        }
+    }
+
+    async deleteData(sheetName, id, password) {
+        try {
+            const response = await fetch(this.url, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'delete',
+                    sheet: sheetName,
+                    data: { id, password }
+                })
+            });
+            const result = await response.json();
+            return result;
+        } catch (error) {
+            console.error('Error deleting data:', error);
+            return { success: false, error: error.toString() };
+        }
+    }
+}
+
+// Initialize the API
+const sheetsAPI = USE_GOOGLE_SHEETS ? new GoogleSheetsAPI(GOOGLE_SHEETS_URL) : null;
+
 // ===================================
 // DATA MANAGEMENT
 // ===================================
 class RentalManager {
     constructor() {
-        this.dailyEntries = this.loadData('dailyEntries') || [];
-        this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
-        this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
+        this.dailyEntries = [];
+        this.monthlyExpenses = [];
+        this.maintenanceRecords = [];
+        this.isInitialized = false;
+    }
+
+    // Initialize data - load from Google Sheets or localStorage
+    async init() {
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            // Load from Google Sheets
+            const [dailyData, monthlyData, maintenanceData] = await Promise.all([
+                sheetsAPI.getAllData('DailyEntries'),
+                sheetsAPI.getAllData('MonthlyExpenses'),
+                sheetsAPI.getAllData('Maintenance')
+            ]);
+
+            this.dailyEntries = dailyData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                earnings: parseFloat(row.Earnings) || 0,
+                expenses: parseFloat(row.Expenses) || 0,
+                profit: parseFloat(row.Profit) || 0,
+                ownerShare: parseFloat(row.OwnerShare) || 0,
+                driverShare: parseFloat(row.DriverShare) || 0
+            }));
+
+            this.monthlyExpenses = monthlyData.map(row => ({
+                id: parseInt(row.ID),
+                month: row.Month,
+                name: row.Name,
+                amount: parseFloat(row.Amount) || 0
+            }));
+
+            this.maintenanceRecords = maintenanceData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                description: row.Description,
+                cost: parseFloat(row.Cost) || 0
+            }));
+        } else {
+            // Load from localStorage
+            this.dailyEntries = this.loadData('dailyEntries') || [];
+            this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
+            this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
+        }
+        this.isInitialized = true;
     }
 
     // Load data from localStorage
@@ -20,20 +127,26 @@ class RentalManager {
         }
     }
 
-    // Save data to localStorage
-    saveData(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (error) {
-            console.error(`Error saving ${key}:`, error);
+    // Save data to localStorage or Google Sheets
+    async saveData(key, data) {
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            // Google Sheets saves happen in the add/delete methods
+            return true;
+        } else {
+            // Save to localStorage
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (error) {
+                console.error(`Error saving ${key}:`, error);
+            }
         }
     }
 
     // ===================================
     // DAILY ENTRIES
     // ===================================
-
-    addDailyEntry(date, earnings, expenses) {
+    // Add new daily entry
+    async addDailyEntry(date, earnings, expenses) {
         // Check if entry already exists for this date
         if (this.getDailyEntryByDate(date)) {
             return { success: false, message: 'Entry already exists for this date. Please delete the existing entry first.' };
@@ -54,7 +167,22 @@ class RentalManager {
         };
 
         this.dailyEntries.push(entry);
-        this.saveData('dailyEntries', this.dailyEntries);
+
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            // Save to Google Sheets
+            const sheetData = {
+                ID: entry.id,
+                Date: entry.date,
+                Earnings: entry.earnings,
+                Expenses: entry.expenses,
+                Profit: entry.profit,
+                OwnerShare: entry.ownerShare,
+                DriverShare: entry.driverShare
+            };
+            await sheetsAPI.addData('DailyEntries', sheetData);
+        } else {
+            this.saveData('dailyEntries', this.dailyEntries);
+        }
         return { success: true, entry };
     }
 
@@ -62,9 +190,18 @@ class RentalManager {
         return this.dailyEntries.find(entry => entry.date === date);
     }
 
-    deleteDailyEntry(id) {
-        this.dailyEntries = this.dailyEntries.filter(entry => entry.id !== id);
-        this.saveData('dailyEntries', this.dailyEntries);
+    async deleteDailyEntry(id, password) {
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            const result = await sheetsAPI.deleteData('DailyEntries', id, password);
+            if (result.success) {
+                this.dailyEntries = this.dailyEntries.filter(entry => entry.id !== id);
+            }
+            return result;
+        } else {
+            this.dailyEntries = this.dailyEntries.filter(entry => entry.id !== id);
+            this.saveData('dailyEntries', this.dailyEntries);
+            return { success: true };
+        }
     }
 
     getAllDailyEntries(sortDescending = true) {
@@ -590,9 +727,14 @@ class UIController {
 let manager;
 let ui;
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     manager = new RentalManager();
+
+    // Initialize data from Google Sheets or localStorage
+    await manager.init();
+
     ui = new UIController(manager);
 
     console.log('🚗 Car Rental Manager initialized successfully!');
+    console.log(USE_GOOGLE_SHEETS ? '☁️ Using Google Sheets for data storage' : '💾 Using localStorage for data storage');
 });
