@@ -1,4 +1,4 @@
-const USE_GOOGLE_SHEETS = true;
+const USE_GOOGLE_SHEETS = false; // Set to true to use Google Sheets, false for localStorage
 const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx4CJsP8k3h-QGdZ2HQMt93mLT-DVj-llBxj4f3nwKguBY6oXEYvOQSVBzLWR8XKTm9/exec'
 
 // Google Sheets API wrapper
