@@ -88,47 +88,30 @@ class RentalManager {
         this.isInitialized = false;
     }
 
-    // Initialize data - load from Google Sheets or localStorage
+    // Initialize data - load from Firebase
     async init() {
-        if (USE_GOOGLE_SHEETS && sheetsAPI) {
-            // Load from Google Sheets
-            const [dailyData, monthlyData, maintenanceData] = await Promise.all([
-                sheetsAPI.getAllData('DailyEntries'),
-                sheetsAPI.getAllData('MonthlyExpenses'),
-                sheetsAPI.getAllData('Maintenance')
-            ]);
-
-            this.dailyEntries = dailyData.map(row => ({
-                id: parseInt(row.ID),
-                date: row.Date,
-                earnings: parseFloat(row.Earnings) || 0,
-                expenses: parseFloat(row.Expenses) || 0,
-                profit: parseFloat(row.Profit) || 0,
-                ownerShare: parseFloat(row.OwnerShare) || 0,
-                driverShare: parseFloat(row.DriverShare) || 0
-            }));
-
-            this.monthlyExpenses = monthlyData.map(row => ({
-                id: parseInt(row.ID),
-                month: row.Month,
-                name: row.Name,
-                amount: parseFloat(row.Amount) || 0
-            }));
-
-            this.maintenanceRecords = maintenanceData.map(row => ({
-                id: parseInt(row.ID),
-                date: row.Date,
-                description: row.Description,
-                cost: parseFloat(row.Cost) || 0
-            }));
-        } else {
-            // Load from localStorage
-            this.dailyEntries = this.loadData('dailyEntries') || [];
-            this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
-            this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
+        if (!db) {
+            console.warn('Firebase not available');
+            this.isInitialized = true;
+            return;
         }
-        this.isInitialized = true;
+
+        try {
+            const snapshot = await db.ref('/').once('value');
+            const data = snapshot.val() || {};
+
+            this.dailyEntries = data.dailyEntries ? Object.values(data.dailyEntries) : [];
+            this.monthlyExpenses = data.monthlyExpenses ? Object.values(data.monthlyExpenses) : [];
+            this.maintenanceRecords = data.maintenanceRecords ? Object.values(data.maintenanceRecords) : [];
+
+            this.isInitialized = true;
+            console.log('✅ Data loaded from Firebase');
+        } catch (error) {
+            console.error('Error loading from Firebase:', error);
+            this.isInitialized = true;
+        }
     }
+
 
     // Load data from localStorage
     loadData(key) {
@@ -750,5 +733,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     ui = new UIController(manager);
 
     console.log('🚗 Car Rental Manager initialized successfully!');
-    console.log(USE_GOOGLE_SHEETS ? '☁️ Using Google Sheets for data storage' : '💾 Using localStorage for data storage');
+    console.log('🔥 Using Firebase for real-time data storage');
 });
