@@ -8,35 +8,35 @@
   --success-color: #10b981;
   --danger-color: #ef4444;
   --warning-color: #f59e0b;
-  
+
   /* Background Colors */
   --bg-dark: #0f172a;
   --bg-card: #1e293b;
   --bg-hover: #334155;
-  
+
   /* Text Colors */
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
-  
+
   /* Spacing */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
   --spacing-md: 1.5rem;
   --spacing-lg: 2rem;
   --spacing-xl: 3rem;
-  
+
   /* Border Radius */
   --radius-sm: 0.5rem;
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(102, 126, 234, 0.4);
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 300ms ease;
@@ -75,31 +75,60 @@ body::before {
   width: 100%;
   height: 100%;
   background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+    radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
   z-index: -1;
   animation: gradientShift 15s ease infinite;
 }
 
 @keyframes gradientShift {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* ===================================
    TYPOGRAPHY
    =================================== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--spacing-sm);
 }
 
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.5rem; }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1.125rem; }
-h6 { font-size: 1rem; }
+h1 {
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-size: 2rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
 
 /* ===================================
    LAYOUT - Container & Grid
@@ -115,9 +144,17 @@ h6 { font-size: 1rem; }
   gap: var(--spacing-md);
 }
 
-.grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-.grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
 
 /* ===================================
    HEADER
@@ -472,17 +509,24 @@ h6 { font-size: 1rem; }
   color: var(--danger-color);
 }
 
-.mb-0 { margin-bottom: 0; }
-.mb-sm { margin-bottom: var(--spacing-sm); }
-.mb-md { margin-bottom: var(--spacing-md); }
-.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-0 {
+  margin-bottom: 0;
+}
 
-.mt-lg { margin-top: var(--spacing-lg); }
+.mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
 
-/* Currency Symbol */
-.currency::before {
-  content: '₹';
-  margin-right: 2px;
+.mb-md {
+  margin-bottom: var(--spacing-md);
+}
+
+.mb-lg {
+  margin-bottom: var(--spacing-lg);
+}
+
+.mt-lg {
+  margin-top: var(--spacing-lg);
 }
 
 /* ===================================
@@ -493,6 +537,7 @@ h6 { font-size: 1rem; }
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -504,9 +549,12 @@ h6 { font-size: 1rem; }
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -523,24 +571,29 @@ h6 { font-size: 1rem; }
   html {
     font-size: 14px;
   }
-  
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
-  
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
   .nav-tabs {
     flex-direction: row;
     overflow-x: auto;
   }
-  
+
   .table-container {
     font-size: 0.875rem;
   }
-  
+
   .table th,
   .table td {
     padding: 0.5rem;
   }
-  
+
   .stat-value {
     font-size: 1.5rem;
   }
