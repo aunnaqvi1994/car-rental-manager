@@ -167,7 +167,7 @@ class RentalManager {
     // MONTHLY EXPENSES
     // ===================================
 
-    addMonthlyExpense(name, amount, month) {
+    async addMonthlyExpense(name, amount, month) {
         const expense = {
             id: Date.now(),
             name,
@@ -180,7 +180,7 @@ class RentalManager {
         return { success: true, expense };
     }
 
-    deleteMonthlyExpense(id) {
+    async deleteMonthlyExpense(id) {
         this.monthlyExpenses = this.monthlyExpenses.filter(exp => exp.id !== id);
         await this.saveToFirebase("monthlyExpenses", this.monthlyExpenses);
     }
@@ -198,7 +198,7 @@ class RentalManager {
     // MAINTENANCE
     // ===================================
 
-    addMaintenanceRecord(date, description, cost) {
+    async addMaintenanceRecord(date, description, cost) {
         const record = {
             id: Date.now(),
             date,
@@ -211,7 +211,7 @@ class RentalManager {
         return { success: true, record };
     }
 
-    deleteMaintenanceRecord(id) {
+    async deleteMaintenanceRecord(id) {
         this.maintenanceRecords = this.maintenanceRecords.filter(rec => rec.id !== id);
         await this.saveToFirebase("maintenanceRecords", this.maintenanceRecords);
     }
@@ -558,7 +558,7 @@ class UIController {
         const amount = document.getElementById('expenseAmount').value;
         const month = document.getElementById('expenseMonth').value;
 
-        const result = this.manager.addMonthlyExpense(name, amount, month);
+        const result = this.manager.async addMonthlyExpense(name, amount, month);
 
         if (result.success) {
             alert('✅ Monthly expense added successfully!');
@@ -585,13 +585,13 @@ class UIController {
         <td>${expense.name}</td>
         <td class="amount currency">${this.manager.formatCurrency(expense.amount)}</td>
         <td class="actions">
-          <button class="btn btn-danger btn-sm" onclick="ui.deleteMonthlyExpense(${expense.id})">🗑️ Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="ui.async deleteMonthlyExpense(${expense.id})">🗑️ Delete</button>
         </td>
       </tr>
     `).join('');
     }
 
-    deleteMonthlyExpense(id) {
+    async deleteMonthlyExpense(id) {
         const password = prompt('🔒 Owner Password Required\n\nEnter password to delete this expense:');
 
         if (password !== '1234') {
@@ -600,7 +600,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this expense?')) {
-            this.manager.deleteMonthlyExpense(id);
+            this.manager.async deleteMonthlyExpense(id);
             this.renderMonthlyExpenses();
             alert('✅ Expense deleted successfully!');
         }
@@ -615,7 +615,7 @@ class UIController {
         const description = document.getElementById('maintenanceDescription').value;
         const cost = document.getElementById('maintenanceCost').value;
 
-        const result = this.manager.addMaintenanceRecord(date, description, cost);
+        const result = this.manager.async addMaintenanceRecord(date, description, cost);
 
         if (result.success) {
             alert('✅ Maintenance record added successfully!');
@@ -644,13 +644,13 @@ class UIController {
         <td>${record.description}</td>
         <td class="amount currency">${this.manager.formatCurrency(record.cost)}</td>
         <td class="actions">
-          <button class="btn btn-danger btn-sm" onclick="ui.deleteMaintenanceRecord(${record.id})">🗑️ Delete</button>
+          <button class="btn btn-danger btn-sm" onclick="ui.async deleteMaintenanceRecord(${record.id})">🗑️ Delete</button>
         </td>
       </tr>
     `).join('');
     }
 
-    deleteMaintenanceRecord(id) {
+    async deleteMaintenanceRecord(id) {
         const password = prompt('🔒 Owner Password Required\n\nEnter password to delete this record:');
 
         if (password !== '1234') {
@@ -659,7 +659,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this maintenance record?')) {
-            this.manager.deleteMaintenanceRecord(id);
+            this.manager.async deleteMaintenanceRecord(id);
             this.renderMaintenanceRecords();
             alert('✅ Maintenance record deleted successfully!');
         }
