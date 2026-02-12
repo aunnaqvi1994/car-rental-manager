@@ -1,135 +1,156 @@
 # Google Sheets Integration - Complete Setup Guide
 
-## 🎯 What This Does
-Replaces localStorage with Google Sheets so **both you and your driver can access the same data from any device, anywhere**.
+## 🎯 What This Will Do
+After setup, both you and your driver will see the same data on any device!
 
 ---
 
-## 📋 Step-by-Step Setup (20 minutes)
+## Part 1: Create Google Sheet (5 minutes)
 
-### Step 1: Create Your Google Sheet (2 minutes)
+### Step 1: Create the Sheet
+1. Go to https://sheets.google.com
+2. Click **"+ Blank"** (the colorful plus icon)
+3. Click on "Untitled spreadsheet" at top
+4. Rename it to: **"Car Rental Data"**
 
-1. Go to [sheets.google.com](https://sheets.google.com)
-2. Click **"+ Blank"** to create a new sheet
-3. Name it: **"Car Rental Data"**
+### Step 2: Create 3 Tabs
+You need to create 3 separate sheets (tabs at the bottom):
 
-4. Create **3 sheets** (tabs at the bottom):
-   - Rename "Sheet1" to **"DailyEntries"**
-   - Click **"+"** to add new sheet, name it **"MonthlyExpenses"**
-   - Click **"+"** to add new sheet, name it **"Maintenance"**
-
-5. **Set up column headers** in each sheet:
-
-**DailyEntries** sheet (columns A-G):
+**Tab 1: DailyEntries**
+1. The first sheet is already there - rename it from "Sheet1" to **"DailyEntries"**
+2. In **Row 1**, add these column headers:
 ```
-ID | Date | Earnings | Expenses | Profit | OwnerShare | DriverShare
+A1: ID
+B1: Date
+C1: Earnings
+D1: Expenses
+E1: Profit
+F1: OwnerShare
+G1: DriverShare
 ```
 
-**MonthlyExpenses** sheet (columns A-D):
+**Tab 2: MonthlyExpenses**
+1. Click the **"+"** button at bottom left to add new sheet
+2. Rename it to **"MonthlyExpenses"**
+3. In **Row 1**, add these headers:
 ```
-ID | Month | Name | Amount
+A1: ID
+B1: Month
+C1: Name
+D1: Amount
 ```
 
-**Maintenance** sheet (columns A-D):
+**Tab 3: Maintenance**
+1. Click **"+"** again to add another sheet
+2. Rename it to **"Maintenance"**
+3. In **Row 1**, add these headers:
 ```
-ID | Date | Description | Cost
+A1: ID
+B1: Date
+C1: Description
+D1: Cost
 ```
 
 ---
 
-### Step 2: Create Apps Script (10 minutes)
+## Part 2: Add Apps Script (10 minutes)
 
+### Step 3: Open Apps Script
 1. In your Google Sheet, click **Extensions** → **Apps Script**
-2. Delete any existing code
-3. **Copy and paste** the complete script (I'll provide it separately)
-4. Click **Save** (disk icon)
+2. You'll see a new tab with some code
+3. **DELETE** all the existing code in the editor
+
+### Step 4: Copy the Script
+1. Open the file: `GoogleAppsScript.gs` (in your project folder)
+2. **Copy ALL the code** from that file
+3. **Paste it** into the Apps Script editor
+4. Click the **💾 Save** icon
 5. Name the project: **"Car Rental API"**
 
----
-
-### Step 3: Deploy as Web App (3 minutes)
-
+### Step 5: Deploy as Web App
 1. Click **Deploy** → **New deployment**
-2. Click the **gear icon** ⚙️ → Select **"Web app"**
-3. **Description**: "Car Rental Manager API"
-4. **Execute as**: **Me** (your Google account)
-5. **Who has access**: **Anyone**
-6. Click **Deploy**
-7. **Authorize** the app (click "Allow")
-8. **COPY THE WEB APP URL** - you'll need this!
-   - It looks like: `https://script.google.com/macros/s/ABC...XYZ/exec`
+2. Click the **⚙️ gear icon** next to "Select type"
+3. Choose **"Web app"**
+4. Fill in these settings:
+   - **Description**: "Car Rental Manager API"
+   - **Execute as**: **Me** (your email)
+   - **Who has access**: **Anyone**
+5. Click **Deploy**
+6. Click **Authorize access**
+7. Choose your Google account
+8. Click **Advanced** → **Go to Car Rental API (unsafe)** → **Allow**
 
----
-
-### Step 4: Update Your App (2 minutes)
-
-1. Open `app.js` in your car rental manager
-2. Find line 1 and add this at the very top:
-```javascript
-const GOOGLE_SHEETS_URL = 'YOUR_WEB_APP_URL_HERE';
+### Step 6: Copy the Web App URL
+After deployment, you'll see a URL like:
 ```
-3. Replace `'YOUR_WEB_APP_URL_HERE'` with the URL you copied
+https://script.google.com/macros/s/AKfycby...some_long_code.../exec
+```
+
+**⚠️ IMPORTANT: Copy this entire URL!** You'll need it in the next step.
 
 ---
 
-### Step 5: Test It! (3 minutes)
+## Part 3: Connect App to Google Sheets (5 minutes)
 
-1. Open `index.html` in your browser
-2. Try adding a daily entry
+### Step 7: Update Your App
+1. Open file: `/home/active/.gemini/antigravity/scratch/car-rental-manager/app.js`
+2. Find **Line 1** (the very first line)
+3. Add this code at the very beginning:
+
+```javascript
+// GOOGLE SHEETS CONFIGURATION
+const USE_GOOGLE_SHEETS = true;
+const GOOGLE_SHEETS_URL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+```
+
+4. Replace `'PASTE_YOUR_WEB_APP_URL_HERE'` with the URL you copied in Step 6
+
+### Step 8: Deploy the Updated App
+Run these commands:
+```bash
+cd /home/active/.gemini/antigravity/scratch/car-rental-manager
+git add .
+git commit -m "Connected to Google Sheets"
+git push origin main
+```
+
+Wait 2 minutes, then refresh your app!
+
+---
+
+## ✅ Testing
+
+1. Open your app: https://aunnaqvi1994.github.io/car-rental-manager/
+2. Add a daily entry
 3. Check your Google Sheet - the data should appear!
-4. Open the same URL on your mobile - you should see the same data!
+4. Open the app on another device - you should see the same data!
 
 ---
 
-## 🔐 Sharing with Your Driver
+## 🎉 What You'll Have
 
-### Option 1: Just Share the App URL
-- Deploy your app to Netlify/GitHub Pages
-- Share the URL with your driver
-- Both of you will see the same data automatically!
-
-### Option 2: Also Share the Sheet (Optional Backup)
-1. In Google Sheets, click **Share** button
-2. Add your driver's email
-3. Give them **"Viewer"** access (they don't need to edit the sheet directly)
-
----
-
-## 🚨 Important Notes
-
-**Data Privacy:**
-- The Web App is set to "Anyone" can access, which means anyone with the URL can read/write data
-- The Google Sheet itself can be private (only you can edit)
-- Password protection for deletes is still active
-
-**Backup:**
-- Your data is automatically backed up on Google Drive
-- You can download the sheet anytime as Excel/CSV
-
-**Costs:**
-- Completely FREE (Google Apps Script quota is very generous)
-
----
-
-## 🎉 Benefits
-
-✅ Real-time sync - changes appear instantly on all devices
-✅ Access from anywhere - mobile, computer, any browser  
-✅ Both owner and driver see same data
-✅ Automatic backups on Google Drive
-✅ No database setup or hosting costs
+✅ Real-time data sync across all devices
+✅ Both you and driver see the same data
+✅ Automatic backup on Google Drive
 ✅ Can view/edit data directly in Google Sheets if needed
 
 ---
 
-## 📱 Using on Mobile
+## 🆘 Troubleshooting
 
-After deployment:
-1. Open the app URL on your phone
-2. Add to home screen
-3. Works like a native app!
-4. All data syncs with your desktop automatically
+**Problem: "Script not found" error**
+- Make sure you deployed the Apps Script as "Web app"
+- Check that "Who has access" is set to "Anyone"
+
+**Problem: Data not appearing in sheet**
+- Check the console (F12 in browser) for errors
+- Make sure the Web App URL is correct in app.js
+- Verify sheet tab names are exactly: DailyEntries, MonthlyExpenses, Maintenance
+
+**Problem: Still seeing localStorage data**
+- Clear browser cache (Ctrl+Shift+R)
+- Check if `USE_GOOGLE_SHEETS = true` in app.js
 
 ---
 
-**Next:** I'll provide the complete Apps Script code in a separate file!
+**Ready to start? Let me know which step you're on and I'll help you through it!**
