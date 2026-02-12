@@ -1,19 +1,15 @@
 // ====================================================
-// FIREBASE CONFIGURATION  
+// FIREBASE CONFIGURATION
 // ====================================================
 const firebaseConfig = {
     databaseURL: "https://car-rental-manager-8e3e9-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
 // Initialize Firebase
-let database;
-try {
-    firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-    console.log('🔥 Firebase initialized successfully!');
-} catch(e) {
-    console.error('Firebase initialization failed:', e);
-}
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+console.log('🔥 Firebase initialized successfully!');
 
 // ===================================
 // DATA MANAGEMENT
@@ -28,38 +24,44 @@ class RentalManager {
 
     // Initialize data - load from Google Sheets or localStorage
     async init() {
-        if (!database) {
-            console.warn("Firebase not available");
-            this.isInitialized = true;
-            return;
-        }
-        try {
-            const snapshot = await database.ref("/").once("value");
-            const data = snapshot.val() || {};
-            this.dailyEntries = data.dailyEntries ? Object.values(data.dailyEntries) : [];
-            this.monthlyExpenses = data.monthlyExpenses ? Object.values(data.monthlyExpenses) : [];
-            this.maintenanceRecords = data.maintenanceRecords ? Object.values(data.maintenanceRecords) : [];
-            this.isInitialized = true;
-            console.log("✅ Data loaded from Firebase");
-        } catch (error) {
-            console.error("Error loading from Firebase:", error);
-            this.isInitialized = true;
-        }
-    }
+        if (USE_GOOGLE_SHEETS && sheetsAPI) {
+            // Load from Google Sheets
+            const [dailyData, monthlyData, maintenanceData] = await Promise.all([
+                sheetsAPI.getAllData('DailyEntries'),
+                sheetsAPI.getAllData('MonthlyExpenses'),
+                sheetsAPI.getAllData('Maintenance')
+            ]);
 
+            this.dailyEntries = dailyData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                earnings: parseFloat(row.Earnings) || 0,
+                expenses: parseFloat(row.Expenses) || 0,
+                profit: parseFloat(row.Profit) || 0,
+                ownerShare: parseFloat(row.OwnerShare) || 0,
+                driverShare: parseFloat(row.DriverShare) || 0
+            }));
 
-    // Save data to Firebase
-    async saveToFirebase(collection, data) {
-        if (!database) return;
-        try {
-            const dataObj = {};
-            data.forEach(item => {
-                dataObj[item.id] = item;
-            });
-            await database.ref(`/${collection}`).set(dataObj);
-        } catch (error) {
-            console.error(`Error saving to Firebase:`, error);
+            this.monthlyExpenses = monthlyData.map(row => ({
+                id: parseInt(row.ID),
+                month: row.Month,
+                name: row.Name,
+                amount: parseFloat(row.Amount) || 0
+            }));
+
+            this.maintenanceRecords = maintenanceData.map(row => ({
+                id: parseInt(row.ID),
+                date: row.Date,
+                description: row.Description,
+                cost: parseFloat(row.Cost) || 0
+            }));
+        } else {
+            // Load from localStorage
+            this.dailyEntries = this.loadData('dailyEntries') || [];
+            this.monthlyExpenses = this.loadData('monthlyExpenses') || [];
+            this.maintenanceRecords = this.loadData('maintenanceRecords') || [];
         }
+        this.isInitialized = true;
     }
 
     // Load data from localStorage
@@ -127,7 +129,7 @@ class RentalManager {
             };
             await sheetsAPI.addData('DailyEntries', sheetData);
         } else {
-        await this.saveToFirebase("dailyEntries", this.dailyEntries);
+            this.saveData('dailyEntries', this.dailyEntries);
         }
         return { success: true, entry };
     }
@@ -145,7 +147,7 @@ class RentalManager {
             return result;
         } else {
             this.dailyEntries = this.dailyEntries.filter(entry => entry.id !== id);
-        await this.saveToFirebase("dailyEntries", this.dailyEntries);
+            this.saveData('dailyEntries', this.dailyEntries);
             return { success: true };
         }
     }
@@ -176,13 +178,13 @@ class RentalManager {
         };
 
         this.monthlyExpenses.push(expense);
-        await this.saveToFirebase("monthlyExpenses", this.monthlyExpenses);
+        this.saveData('monthlyExpenses', this.monthlyExpenses);
         return { success: true, expense };
     }
 
     deleteMonthlyExpense(id) {
         this.monthlyExpenses = this.monthlyExpenses.filter(exp => exp.id !== id);
-        await this.saveToFirebase("monthlyExpenses", this.monthlyExpenses);
+        this.saveData('monthlyExpenses', this.monthlyExpenses);
     }
 
     getAllMonthlyExpenses(sortDescending = true) {
@@ -207,13 +209,13 @@ class RentalManager {
         };
 
         this.maintenanceRecords.push(record);
-        await this.saveToFirebase("maintenanceRecords", this.maintenanceRecords);
+        this.saveData('maintenanceRecords', this.maintenanceRecords);
         return { success: true, record };
     }
 
     deleteMaintenanceRecord(id) {
         this.maintenanceRecords = this.maintenanceRecords.filter(rec => rec.id !== id);
-        await this.saveToFirebase("maintenanceRecords", this.maintenanceRecords);
+        this.saveData('maintenanceRecords', this.maintenanceRecords);
     }
 
     getAllMaintenanceRecords(sortDescending = true) {
