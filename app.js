@@ -1,7 +1,7 @@
+const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzzOmbd2z98S9Kk7VRfsSbjehYhIiHt3M9396IOkVAFiA0dgQ0YxaUSQkgWi3I_qQUj/exec'
 // ===================================
 // DATA MANAGEMENT
 // ===================================
-
 class RentalManager {
     constructor() {
         this.dailyEntries = this.loadData('dailyEntries') || [];
@@ -204,12 +204,11 @@ class RentalManager {
     }
 
     formatCurrency(amount) {
-        return new Intl.NumberFormat('en-PK', {
-            style: 'currency',
-            currency: 'PKR',
+        const formatted = new Intl.NumberFormat('en-PK', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
-        }).format(amount).replace('PKR', 'Rs');
+        }).format(amount);
+        return 'Rs ' + formatted;
     }
 
     formatDateDisplay(dateString) {
