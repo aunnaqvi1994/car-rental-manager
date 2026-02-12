@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Rental Manager - Track Daily Earnings & Profit</title>
+  <meta name="description"
+    content="Manage your car rental business with daily profit tracking and 50/50 split calculations">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <span class="logo-icon">🚗</span>
+        <span>Car Rental Manager</span>
+      </div>
+      <div class="text-muted" id="currentDate"></div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <div class="container">
+
+    <!-- NAVIGATION TABS -->
+    <nav class="nav-tabs">
+      <button class="tab-button active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab-button" data-tab="add-entry">➕ Add Entry</button>
+      <button class="tab-button" data-tab="daily-reports">📅 Daily Reports</button>
+      <button class="tab-button" data-tab="monthly-expenses">💰 Monthly Expenses</button>
+      <button class="tab-button" data-tab="maintenance">🔧 Maintenance</button>
+    </nav>
+
+    <!-- ============================================
+         SECTION 1: DASHBOARD
+         ============================================ -->
+    <section id="dashboard" class="tab-content">
+      <h2 class="mb-md">Dashboard Overview</h2>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-4 mb-lg">
+        <div class="card stat-card">
+          <div class="stat-label">Today's Earnings</div>
+          <div class="stat-value currency" id="todayEarnings">0</div>
+          <div class="stat-subtext">Total Revenue</div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-label">Today's Profit</div>
+          <div class="stat-value currency" id="todayProfit">0</div>
+          <div class="stat-subtext">After Expenses</div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-label">Your Share</div>
+          <div class="stat-value currency text-success" id="todayOwnerShare">0</div>
+          <div class="stat-subtext">50% Split</div>
+        </div>
+
+        <div class="card stat-card">
+          <div class="stat-label">Driver's Share</div>
+          <div class="stat-value currency text-success" id="todayDriverShare">0</div>
+          <div class="stat-subtext">50% Split</div>
+        </div>
+      </div>
+
+      <!-- Monthly Summary -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">This Month Summary</h3>
+        </div>
+        <div class="card-body">
+          <div class="grid grid-3">
+            <div>
+              <div class="stat-label">Total Earnings</div>
+              <div class="stat-value currency" style="font-size: 1.75rem;" id="monthEarnings">0</div>
+            </div>
+            <div>
+              <div class="stat-label">Total Profit</div>
+              <div class="stat-value currency" style="font-size: 1.75rem;" id="monthProfit">0</div>
+            </div>
+            <div>
+              <div class="stat-label">Days Logged</div>
+              <div class="stat-value" style="font-size: 1.75rem;" id="monthDays">0</div>
+            </div>
+          </div>
+
+          <div class="grid grid-2 mt-lg">
+            <div>
+              <div class="stat-label">Your Total Share</div>
+              <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="monthOwnerShare">0</div>
+            </div>
+            <div>
+              <div class="stat-label">Driver's Total Share</div>
+              <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="monthDriverShare">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 2: ADD DAILY ENTRY
+         ============================================ -->
+    <section id="add-entry" class="tab-content hidden">
+      <h2 class="mb-md">Add Daily Entry</h2>
+
+      <div class="card">
+        <form id="dailyEntryForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="entryDate">Date</label>
+              <input type="date" id="entryDate" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="earnings">Total Earnings (Rs)</label>
+              <input type="number" id="earnings" class="form-input" placeholder="Total Amount" required min="0"
+                step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="expenses">Daily Expenses (Rs)</label>
+              <input type="number" id="expenses" class="form-input" placeholder="Total Expense" required min="0"
+                step="0.01">
+            </div>
+          </div>
+
+          <!-- Calculation Preview -->
+          <div class="card" style="background: rgba(102, 126, 234, 0.1); margin-top: var(--spacing-md);">
+            <h4 class="mb-md">Profit Calculation Preview</h4>
+            <div class="grid grid-3">
+              <div>
+                <div class="stat-label">Total Profit</div>
+                <div class="stat-value currency" style="font-size: 1.5rem;" id="previewProfit">0</div>
+              </div>
+              <div>
+                <div class="stat-label">Your Share (50%)</div>
+                <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="previewOwnerShare">0</div>
+              </div>
+              <div>
+                <div class="stat-label">Driver's Share (50%)</div>
+                <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="previewDriverShare">0</div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block mt-lg">
+            💾 Save Entry
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 3: DAILY REPORTS
+         ============================================ -->
+    <section id="daily-reports" class="tab-content hidden">
+      <div class="card mb-md">
+        <div class="card-header">
+          <h2 class="card-title">Daily Reports</h2>
+        </div>
+        <div class="card-body">
+          <!-- Filter Controls -->
+          <div class="form-row mb-md">
+            <div class="form-group">
+              <label class="form-label" for="filterMonth">Filter by Month</label>
+              <input type="month" id="filterMonth" class="form-input">
+            </div>
+            <div class="form-group">
+              <button class="btn btn-secondary" id="showAllBtn" style="margin-top: 1.5rem;">Show All</button>
+            </div>
+          </div>
+
+          <!-- Totals Summary -->
+          <div class="card" style="background: rgba(16, 185, 129, 0.1); margin-bottom: var(--spacing-md);">
+            <h4 class="mb-sm">Total Amounts for Displayed Entries</h4>
+            <div class="grid grid-2">
+              <div>
+                <div class="stat-label">Your Total Share</div>
+                <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="reportTotalOwner">0</div>
+              </div>
+              <div>
+                <div class="stat-label">Driver's Total Share</div>
+                <div class="stat-value currency text-success" style="font-size: 1.5rem;" id="reportTotalDriver">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reports Table -->
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Earnings</th>
+                  <th>Expenses</th>
+                  <th>Profit</th>
+                  <th>Your Share</th>
+                  <th>Driver Share</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTableBody">
+                <tr>
+                  <td colspan="7" class="text-center text-muted">No entries yet. Add your first daily entry!</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 4: MONTHLY EXPENSES
+         ============================================ -->
+    <section id="monthly-expenses" class="tab-content hidden">
+      <h2 class="mb-md">Monthly Expenses</h2>
+
+      <!-- Add Monthly Expense Form -->
+      <div class="card mb-md">
+        <h3 class="mb-md">Add Monthly Expense</h3>
+        <form id="monthlyExpenseForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="expenseName">Expense Name</label>
+              <input type="text" id="expenseName" class="form-input" placeholder="e.g., Oil Change" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="expenseAmount">Amount (Rs)</label>
+              <input type="number" id="expenseAmount" class="form-input" placeholder="500" required min="0" step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="expenseMonth">Month</label>
+              <input type="month" id="expenseMonth" class="form-input" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            ➕ Add Expense
+          </button>
+        </form>
+      </div>
+
+      <!-- Monthly Expenses List -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Expense History</h3>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Expense Name</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="monthlyExpensesTableBody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No monthly expenses added yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         SECTION 5: MAINTENANCE
+         ============================================ -->
+    <section id="maintenance" class="tab-content hidden">
+      <h2 class="mb-md">Maintenance & Repairs</h2>
+
+      <!-- Add Maintenance Entry -->
+      <div class="card mb-md">
+        <h3 class="mb-md">Log Maintenance</h3>
+        <form id="maintenanceForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="maintenanceDate">Date</label>
+              <input type="date" id="maintenanceDate" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="maintenanceDescription">Description</label>
+              <input type="text" id="maintenanceDescription" class="form-input"
+                placeholder="e.g., Brake pad replacement" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="maintenanceCost">Cost (Rs)</label>
+              <input type="number" id="maintenanceCost" class="form-input" placeholder="2500" required min="0"
+                step="0.01">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            🔧 Add Maintenance Record
+          </button>
+        </form>
+      </div>
+
+      <!-- Maintenance History -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Maintenance History</h3>
+          <div class="stat-label">Total Spent: <span class="currency stat-value" style="font-size: 1.25rem;"
+              id="totalMaintenanceCost">0</span></div>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Cost</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="maintenanceTableBody">
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No maintenance records yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- JavaScript -->
+  <script src="app.js"></script>
+</body>
+
+</html>
