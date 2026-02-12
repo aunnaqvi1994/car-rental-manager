@@ -360,7 +360,7 @@ class UIController {
         // Daily Entry Form
         document.getElementById('dailyEntryForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleDailyEntrySubmit();
+            this.async handleDailyEntrySubmit();
         });
 
         // Real-time calculation preview
@@ -373,13 +373,13 @@ class UIController {
         // Monthly Expense Form
         document.getElementById('monthlyExpenseForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleMonthlyExpenseSubmit();
+            this.async handleMonthlyExpenseSubmit();
         });
 
         // Maintenance Form
         document.getElementById('maintenanceForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleMaintenanceSubmit();
+            this.async handleMaintenanceSubmit();
         });
 
         // Filter controls
@@ -468,7 +468,7 @@ class UIController {
         document.getElementById('previewDriverShare').textContent = this.manager.formatCurrency(share);
     }
 
-    handleDailyEntrySubmit() {
+    async handleDailyEntrySubmit() {
         const date = document.getElementById('entryDate').value;
         const earnings = document.getElementById('earnings').value;
         const expenses = document.getElementById('expenses').value;
@@ -553,12 +553,12 @@ class UIController {
     // MONTHLY EXPENSES
     // ===================================
 
-    handleMonthlyExpenseSubmit() {
+    async handleMonthlyExpenseSubmit() {
         const name = document.getElementById('expenseName').value;
         const amount = document.getElementById('expenseAmount').value;
         const month = document.getElementById('expenseMonth').value;
 
-        const result = this.manager.async addMonthlyExpense(name, amount, month);
+        const result = await this.manager.addMonthlyExpense(name, amount, month);
 
         if (result.success) {
             alert('✅ Monthly expense added successfully!');
@@ -600,7 +600,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this expense?')) {
-            this.manager.async deleteMonthlyExpense(id);
+            await this.manager.deleteMonthlyExpense(id);
             this.renderMonthlyExpenses();
             alert('✅ Expense deleted successfully!');
         }
@@ -610,12 +610,12 @@ class UIController {
     // MAINTENANCE
     // ===================================
 
-    handleMaintenanceSubmit() {
+    async handleMaintenanceSubmit() {
         const date = document.getElementById('maintenanceDate').value;
         const description = document.getElementById('maintenanceDescription').value;
         const cost = document.getElementById('maintenanceCost').value;
 
-        const result = this.manager.async addMaintenanceRecord(date, description, cost);
+        const result = await this.manager.addMaintenanceRecord(date, description, cost);
 
         if (result.success) {
             alert('✅ Maintenance record added successfully!');
@@ -659,7 +659,7 @@ class UIController {
         }
 
         if (confirm('Are you sure you want to delete this maintenance record?')) {
-            this.manager.async deleteMaintenanceRecord(id);
+            await this.manager.deleteMaintenanceRecord(id);
             this.renderMaintenanceRecords();
             alert('✅ Maintenance record deleted successfully!');
         }
