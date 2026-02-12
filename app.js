@@ -1,47 +1,17 @@
 // Firebase configuration
+let db = null;
 if (typeof firebase !== 'undefined') {
     try {
         firebase.initializeApp({
             databaseURL: "https://car-rental-manager-8e3e9-default-rtdb.asia-southeast1.firebasedatabase.app/"
         });
-        const db = firebase.database();
-        console.log('🔥 Firebase connected to', db.app.options.databaseURL);
-        
-        // Simple sync - save to Firebase whenever localStorage changes
-        const originalSetItem = localStorage.setItem;
-        localStorage.setItem = function(key, value) {
-            originalSetItem.apply(this, arguments);
-            if (key.includes('Entries') || key.includes('Expenses') || key.includes('Records')) {
-                try {
-                    const data = JSON.parse(value);
-                    const obj = {};
-                    if (Array.isArray(data)) {
-                        data.forEach(item => { obj[item.id] = item; });
-                        db.ref(`/${key}`).set(obj);
-                    }
-                } catch(e) {}
-            }
-        };
-        
-        // Load from Firebase on startup
-        window.addEventListener('load', async () => {
-            try {
-                const snapshot = await db.ref('/').once('value');
-                const firebaseData = snapshot.val() || {};
-                for (let key in firebaseData) {
-                    const values = Object.values(firebaseData[key]);
-                    localStorage.setItem(key, JSON.stringify(values));
-                }
-                console.log('✅ Synced from Firebase');
-                location.reload(); // Reload to load Firebase data
-            } catch(e) {
-                console.log('Using localStorage only');
-            }
-        }, { once: true });
-    } catch(e) {
-        console.log('Firebase unavailable, using localStorage');
+        db = firebase.database();
+        console.log('🔥 Firebase ready!');
+    } catch (e) {
+        console.error('Firebase init failed:', e);
     }
 }
+
 const USE_GOOGLE_SHEETS = false; // Set to true to use Google Sheets, false for localStorage
 const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbx4CJsP8k3h-QGdZ2HQMt93mLT-DVj-llBxj4f3nwKguBY6oXEYvOQSVBzLWR8XKTm9/exec'
 
